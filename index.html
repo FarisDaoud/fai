@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Fai – Image Processing Study Assistant</title>
+<style>
+:root{
+  --bg:#f6f7fb;--surface:#fff;--text:#1b1f2a;--muted:#6a7186;--accent:#4f46e5;--accent-text:#fff;
+  --user:#4f46e5;--user-text:#fff;--bot:#fff;--border:#e1e4ee;--code:#eef0f7;
+  box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#0f1117;--surface:#171a23;--text:#e8eaf2;--muted:#8d94ab;--accent:#818cf8;--accent-text:#0f1117;
+  --user:#4f46e5;--user-text:#fff;--bot:#1c202b;--border:#2a2f3d;--code:#0d0f15;}}
+:root[data-theme="dark"]{
+  --bg:#0f1117;--surface:#171a23;--text:#e8eaf2;--muted:#8d94ab;--accent:#818cf8;--accent-text:#0f1117;
+  --user:#4f46e5;--user-text:#fff;--bot:#1c202b;--border:#2a2f3d;--code:#0d0f15;}
+html{scroll-padding-top:env(safe-area-inset-top,0px);height:100%}
+*{box-sizing:border-box}
+body{margin:0;height:100%;background:var(--bg);color:var(--text);font:16px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;display:flex;flex-direction:column}
+header{padding:12px 16px;border-bottom:1px solid var(--border);background:var(--surface)}
+header h1{margin:0;font-size:18px}
+header p{margin:2px 0 0;font-size:13px;color:var(--muted)}
+.modes{display:flex;gap:6px;padding:8px 12px;overflow-x:auto;background:var(--surface);border-bottom:1px solid var(--border)}
+.modes button,.chips button{border:1px solid var(--border);background:var(--bg);color:var(--text);padding:6px 12px;border-radius:999px;font-size:14px;white-space:nowrap;cursor:pointer}
+.modes button.on{background:var(--accent);color:var(--accent-text);border-color:var(--accent)}
+#log{flex:1;overflow-y:auto;padding:14px 12px;display:flex;flex-direction:column;gap:10px}
+.msg{max-width:88%;padding:10px 13px;border-radius:16px;word-wrap:break-word;overflow-wrap:anywhere}
+.msg.user{align-self:flex-end;background:var(--user);color:var(--user-text);border-bottom-right-radius:4px}
+.msg.bot{align-self:flex-start;background:var(--bot);border:1px solid var(--border);border-bottom-left-radius:4px}
+.msg img{max-width:100%;border-radius:10px;display:block;margin-bottom:6px}
+.msg pre{background:var(--code);padding:10px;border-radius:8px;overflow-x:auto;font-size:13px;margin:8px 0}
+.msg code{background:var(--code);padding:1px 5px;border-radius:4px;font-size:.9em}
+.msg pre code{background:none;padding:0}
+.chips{display:flex;gap:6px;padding:0 12px 8px;overflow-x:auto}
+.composer{display:flex;gap:8px;align-items:flex-end;padding:8px 12px 10px;background:var(--surface);border-top:1px solid var(--border)}
+.composer textarea{flex:1;resize:none;max-height:120px;padding:10px 12px;border-radius:14px;border:1px solid var(--border);background:var(--bg);color:var(--text);font:inherit}
+.composer button{border:0;border-radius:50%;width:42px;height:42px;font-size:18px;cursor:pointer;background:var(--accent);color:var(--accent-text);flex:none}
+.composer button.ghost{background:var(--bg);color:var(--text);border:1px solid var(--border)}
+#preview{display:none;padding:6px 12px;font-size:13px;color:var(--muted);background:var(--surface)}
+#notice{padding:10px 14px;font-size:14px;color:var(--muted);text-align:center}
+.hide{display:none!important}
+.tabs{display:flex;background:var(--surface);border-bottom:1px solid var(--border)}
+.tabs button{flex:1;border:0;background:none;color:var(--muted);padding:10px 4px;font-size:14px;border-bottom:2px solid transparent;cursor:pointer}
+.tabs button.on{color:var(--accent);border-bottom-color:var(--accent);font-weight:600}
+#panel{flex:1;overflow-y:auto;padding:14px 14px 20px}
+#panel h2{margin:0 0 4px;font-size:18px}
+.sub{color:var(--muted);font-size:14px;margin:4px 0 10px}
+#panel input[type=text],#panel input:not([type]),#panel textarea{width:100%;padding:10px 12px;border-radius:12px;border:1px solid var(--border);background:var(--surface);color:var(--text);font:inherit;margin:6px 0}
+#panel input[type=file]{margin:6px 0;max-width:100%}
+.btn{border:0;background:var(--accent);color:var(--accent-text);padding:9px 16px;border-radius:12px;font-size:15px;cursor:pointer;margin:6px 0}
+.btn.sm{padding:4px 10px;font-size:13px;margin:0}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:16px;min-height:170px;padding:22px 16px;display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;margin:12px 0;cursor:pointer;font-size:17px}
+.card small{color:var(--muted);font-size:12px;margin-top:14px}
+.row{display:flex;justify-content:space-between;align-items:center}
+.q{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:12px;margin:10px 0}
+.q small{display:block;color:var(--muted);margin-top:8px}
+.opt{border:1px solid var(--border);border-radius:10px;padding:8px 10px;margin:6px 0;cursor:pointer}
+.opt.sel{border-color:var(--accent);background:var(--code)}
+.opt.ok{border-color:#16a34a;background:rgba(22,163,74,.15)}
+.opt.bad{border-color:#dc2626;background:rgba(220,38,38,.15)}
+.note{display:flex;justify-content:space-between;align-items:center;gap:8px;background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:8px 12px;margin:6px 0;font-size:14px}
+header{background:linear-gradient(135deg,#4f46e5,#9333ea);color:#fff;border-bottom:0}
+header p{color:rgba(255,255,255,.85)}
+.ctl{display:flex;gap:6px;margin-top:8px;flex-wrap:wrap}
+.ctl select,.ctl button{background:rgba(255,255,255,.18);color:#fff;border:1px solid rgba(255,255,255,.35);border-radius:999px;padding:5px 10px;font-size:13px;cursor:pointer}
+.ctl select option{color:#000}
+.ctl .on{background:#fff;color:#4f46e5}
+.msg h4{margin:8px 0 4px}.msg p{margin:0 0 6px}.msg ul,.msg ol{margin:4px 0 6px;padding-inline-start:20px}
+.tools{margin-top:6px;display:flex;gap:4px}.tools button{border:0;background:none;cursor:pointer;opacity:.6;font-size:14px}
+#mic.rec{background:#dc2626;color:#fff;animation:pulse 1s infinite}
+@keyframes pulse{50%{opacity:.5}}
+.credit{text-align:center;font-size:11px;color:var(--muted);padding:2px 0 4px;background:var(--surface)}
+</style>
+</head>
+<body>
+<header>
+  <h1>🔬 Fai</h1>
+  <p>Your digital image processing study assistant · Created by Faris Daoud</p>
+  <div class="ctl">
+    <select id="lang" title="Language"></select>
+    <button id="deep" title="Deeper reasoning">🧠 Deep</button>
+    <button id="vo" title="Read answers aloud">🔊 Voice</button>
+    <button id="newc" title="New chat">＋ New</button>
+  </div>
+</header>
+<div class="tabs" id="tabs">
+  <button data-t="chat" class="on">💬 Chat</button>
+  <button data-t="cards">🃏 Cards</button>
+  <button data-t="exam">📝 Exam</button>
+  <button data-t="notes">📚 Notes</button>
+</div>
+<div class="modes" id="modes">
+  <button data-m="explain" class="on">Explain</button>
+  <button data-m="quiz">Quiz me</button>
+  <button data-m="solve">Solve step by step</button>
+  <button data-m="code">Code (Python)</button>
+  <button data-m="simple">Explain simply</button>
+  <button data-m="sum">Summarize notes</button>
+</div>
+<div id="log">
+  <div class="msg bot">Hi! I’m Fai. Ask me anything about digital image processing: filtering, Fourier transforms, edge detection, morphology, segmentation, and more. Pick a mode above, tap a topic below, or attach an image to analyze.</div>
+</div>
+<div id="notice" hidden></div>
+<div class="chips" id="chips"></div>
+<div id="preview"></div>
+<div class="composer" id="composer">
+  <button class="ghost" id="mic" title="Speak" hidden>🎤</button>
+  <button class="ghost" id="attach" title="Attach image" hidden>📎</button>
+  <input type="file" id="file" accept="image/*" hidden>
+  <textarea id="inp" rows="1" placeholder="Ask about any topic…"></textarea>
+  <button id="send" title="Send">➤</button>
+</div>
+<div id="panel" class="hide"></div>
+<div class="credit">Created by Faris Daoud</div>
+<script>
+(function(){
+  const toB64=b=>new Promise((ok,no)=>{const r=new FileReader();r.onload=()=>ok(r.result.split(",")[1]);r.onerror=no;r.readAsDataURL(b);});
+  async function s(input,opts){
+    opts=opts||{};
+    const messages=typeof input==="string"?[{role:"user",content:input}]:input;
+    let image=null;
+    if(opts.images&&opts.images[0]){const b=opts.images[0];image={type:b.type,data:await toB64(b)};}
+    const r=await fetch("/api/chat",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({messages,tier:opts.modelTier,image}),signal:opts.signal});
+    const j=await r.json().catch(()=>({}));
+    if(!r.ok)throw {code:r.status===429?"rate_limited":"error",message:j.error||"error"};
+    if(opts.onText)opts.onText({text:j.text,delta:j.text});
+    return {text:j.text,truncated:false};
+  }
+  s.json=async(input,opts)=>{const r=await s(input,opts);return JSON.parse(r.text.replace(/```json|```/g,"").trim());};
+  s.limits=async()=>({images:true});
+  window.claude={use:async n=>n==="sample"?s:null};
+})();
+</script>
+<script>
+const SYS = "You are Fai, an AI study app created by Faris Daoud. You are a patient and precise tutor for a university digital image processing course (Gonzalez & Woods style topics: intensity transforms, histogram equalization, spatial filtering, Fourier/frequency domain, restoration, morphology, segmentation, color, compression). Be accurate and concise (phone screen). Use plain text math (e.g. g(x,y) = T[f(x,y)]), short paragraphs, and Python with NumPy/OpenCV/scikit-image for code. If the student attaches an image, analyze it as an image processing problem (histogram, noise type, suggested filters). Never invent facts; say so if unsure.";
+const MODES = {
+  explain: "Explain the concept clearly with intuition first, then the formula, then a tiny worked example.",
+  quiz: "Act as a quizmaster: ask ONE exam-style question at a time on the topic, wait for the answer, then grade it and explain. Start with a question if the student names a topic.",
+  solve: "Solve the problem step by step, showing every calculation, and verify the final answer.",
+  code: "Answer with a short, runnable Python snippet (NumPy/OpenCV/scikit-image) plus a 2-3 line explanation."
+};
+const TOPICS = ["Histogram equalization","Convolution vs correlation","Fourier transform","Sobel & Canny edges","Erosion & dilation","Otsu thresholding","Noise models","Gaussian vs median filter"];
+const $ = id => document.getElementById(id);
+let mode = "explain", history = [], sample = null, busy = false, imgBlob = null, imgOK = false;
+
+function esc(s){return s.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");}
+function md(s){
+  const parts = s.split("```");
+  return parts.map((p,i)=>{
+    if(i%2){ return "<pre><code>"+esc(p.replace(/^[a-zA-Z]*\n/,""))+"</code></pre>"; }
+    return fmt(esc(p));
+  }).join("");
+}
+function add(cls, html){
+  const d = document.createElement("div"); d.className = "msg "+cls; d.dir = "auto"; d.innerHTML = html;
+  $("log").appendChild(d); $("log").scrollTop = $("log").scrollHeight; return d;
+}
+function chips(){
+  TOPICS.forEach(t=>{const b=document.createElement("button");b.textContent=t;
+    b.onclick=()=>{$("inp").value = (mode==="quiz"?"Quiz me on: ":"Explain: ")+t; ask();};
+    $("chips").appendChild(b);});
+}
+document.querySelectorAll("#modes button").forEach(b=>b.onclick=()=>{
+  document.querySelectorAll("#modes button").forEach(x=>x.classList.remove("on"));
+  b.classList.add("on"); mode=b.dataset.m;
+});
+$("inp").addEventListener("input",e=>{e.target.style.height="auto";e.target.style.height=Math.min(e.target.scrollHeight,120)+"px";});
+$("inp").addEventListener("keydown",e=>{if(e.key==="Enter"&&!e.shiftKey&&window.innerWidth>700){e.preventDefault();ask();}});
+$("send").onclick = ()=>{ if(busy){ if(abortCtl) abortCtl.abort(); } else ask(); };
+$("attach").onclick = ()=>$("file").click();
+$("file").onchange = e=>{
+  const f = e.target.files[0]; if(!f) return;
+  imgBlob = f; const p=$("preview"); p.style.display="block"; p.textContent = "📎 "+f.name+" (tap send to analyze)";
+};
+
+async function ask(){
+  if(busy) return;
+  const text = $("inp").value.trim();
+  if(!text && !imgBlob) return;
+  if(!sample){ $("notice").hidden=false; $("notice").textContent="AI isn’t available right now. Please reload the page and allow access."; return; }
+  busy = true; $("send").textContent = "■";
+  const blob = imgBlob; imgBlob = null; $("preview").style.display="none"; $("file").value="";
+  const shown = (blob?'<img src="'+URL.createObjectURL(blob)+'" alt="attached image">':"")+md(text||"Analyze this image.");
+  add("user", shown);
+  $("inp").value=""; $("inp").style.height="auto";
+  history.push({role:"user", content: (text||"Analyze this attached image from an image processing perspective.")});
+  const msgs = history.map((m,i)=>{
+    let c = m.content;
+    if(i===0) c = SYS+notesCtx()+"\n\n"+c;
+    if(i===history.length-1) c += "\n\n[Mode: "+MODES[mode]+"]\n[Reply in "+LANGS[lang].name+". Keep key technical terms in English in parentheses.]";
+    return {role:m.role, content:c};
+  });
+  const out = add("bot","…");
+  try{
+    abortCtl = new AbortController();
+    const opts = {cache:false, signal:abortCtl.signal, modelTier: deep?"complex":"default", onText:({text})=>{out.innerHTML=md(text);$("log").scrollTop=$("log").scrollHeight;}};
+    if(blob && imgOK) opts.images=[blob];
+    const r = await sample(msgs, opts);
+    out.innerHTML = md(r.text);
+    history.push({role:"assistant", content:r.text}); save(); speak(r.text); addTools(out, r.text);
+  }catch(err){
+    history.pop();
+    if(abortCtl && abortCtl.signal.aborted){ out.innerHTML += "<br><small>(stopped)</small>"; busy=false; $("send").textContent="➤"; return; }
+    out.innerHTML = err && err.code==="rate_limited" ? "Too many requests. Wait a moment and try again."
+      : err && err.code==="not_granted" ? "Permission was declined, so I can’t answer. Reload and allow it."
+      : "Something went wrong. Please try again.";
+  }
+  busy=false; $("send").textContent="➤";
+}
+
+let notes=[];try{notes=JSON.parse(localStorage.getItem("pt_notes")||"[]");}catch(e){}
+function saveNotes(){try{localStorage.setItem("pt_notes",JSON.stringify(notes));}catch(e){}}
+function notesCtx(){if(!notes.length)return "";return "\n\nThe student’s lecture notes (use as the primary source when relevant):\n"+notes.map(n=>"## "+n.name+"\n"+n.text).join("\n\n").slice(0,12000);}
+const views={},ST={fc:[],fi:0,fl:false,ex:[],ans:[],done:false};
+const CH=["modes","log","notice","chips","preview","composer"];
+function tab(n){
+  document.querySelectorAll("#tabs button").forEach(b=>b.classList.toggle("on",b.dataset.t===n));
+  CH.forEach(id=>$(id).classList.toggle("hide",n!=="chat"));
+  $("panel").classList.toggle("hide",n==="chat");
+  if(n!=="chat")views[n]();
+}
+document.querySelectorAll("#tabs button").forEach(b=>b.onclick=()=>tab(b.dataset.t));
+function note(m){return '<p class="sub">'+esc(m)+'</p>';}
+async function ai(p){
+  if(!sample)throw new Error("na");
+  const r=await sample.json(SYS+notesCtx()+"\n\nWrite all content in "+LANGS[lang].name+".\n\n"+p+"\n\nReturn ONLY valid JSON, no markdown fences.",{cache:false});
+  if(!Array.isArray(r)||!r.length)throw new Error("bad");
+  return r;
+}
+views.cards=()=>{
+  $("panel").innerHTML='<h2>Flashcards</h2><input id="ft" placeholder="Topic (blank = use my notes)"><button class="btn" id="fg">Generate 8 cards</button><div id="fc"></div>';
+  $("fg").onclick=async()=>{
+    $("fc").innerHTML=note("Generating…");
+    try{ST.fc=await ai("Create 8 study flashcards on: "+($("ft").value||"the student’s notes")+'. Format: [{"q":"...","a":"..."}]');ST.fi=0;ST.fl=false;drawFC();}
+    catch(e){$("fc").innerHTML=note("Couldn’t generate cards. Try again.");}
+  };
+  drawFC();
+};
+function drawFC(){
+  const f=$("fc");if(!f||!ST.fc.length)return;
+  const c=ST.fc[ST.fi];
+  f.innerHTML='<div class="card" id="cd">'+esc(ST.fl?c.a:c.q)+'<small>'+(ST.fl?"Answer":"Question")+' · tap to flip</small></div><div class="row"><button class="btn" id="fp">◀</button><span>'+(ST.fi+1)+" / "+ST.fc.length+'</span><button class="btn" id="fn">▶</button></div>';
+  $("cd").onclick=()=>{ST.fl=!ST.fl;drawFC();};
+  $("fp").onclick=()=>{ST.fi=(ST.fi+ST.fc.length-1)%ST.fc.length;ST.fl=false;drawFC();};
+  $("fn").onclick=()=>{ST.fi=(ST.fi+1)%ST.fc.length;ST.fl=false;drawFC();};
+}
+views.exam=()=>{
+  $("panel").innerHTML='<h2>Exam practice</h2><input id="et" placeholder="Topic (blank = use my notes)"><button class="btn" id="eg">Generate 5-question exam</button><div id="ex"></div>';
+  $("eg").onclick=async()=>{
+    $("ex").innerHTML=note("Generating…");
+    try{ST.ex=await ai("Write 5 multiple-choice exam questions on: "+($("et").value||"the student’s notes")+'. Format: [{"q":"...","options":["A","B","C","D"],"answer":0,"why":"..."}] where answer is the index of the correct option.');ST.ans=[];ST.done=false;drawEX();}
+    catch(e){$("ex").innerHTML=note("Couldn’t generate the exam. Try again.");}
+  };
+  drawEX();
+};
+function drawEX(){
+  const x=$("ex");if(!x||!ST.ex.length)return;
+  let h=ST.ex.map((q,i)=>'<div class="q"><b>'+(i+1)+". "+esc(q.q)+'</b>'+(q.options||[]).map((o,j)=>{
+    let c="opt";if(ST.done){if(j===q.answer)c+=" ok";else if(ST.ans[i]===j)c+=" bad";}else if(ST.ans[i]===j)c+=" sel";
+    return '<div class="'+c+'" data-i="'+i+'" data-j="'+j+'">'+esc(String(o))+'</div>';}).join("")+(ST.done?'<small>'+esc(q.why||"")+'</small>':"")+'</div>').join("");
+  if(ST.done){const s=ST.ex.filter((q,i)=>ST.ans[i]===q.answer).length;h+='<p><b>Score: '+s+" / "+ST.ex.length+'</b></p><button class="btn" id="er">Retake</button>';}
+  else h+='<button class="btn" id="es">Submit</button>';
+  x.innerHTML=h;
+  x.querySelectorAll(".opt").forEach(o=>o.onclick=()=>{if(ST.done)return;ST.ans[+o.dataset.i]=+o.dataset.j;drawEX();});
+  if($("es"))$("es").onclick=()=>{ST.done=true;drawEX();};
+  if($("er"))$("er").onclick=()=>{ST.ans=[];ST.done=false;drawEX();};
+}
+views.notes=()=>{
+  $("panel").innerHTML='<h2>Lecture notes</h2>'+note("Saved on this device. Chat, flashcards and exams use them.")+'<input type="file" id="nf" accept=".txt,.md,.csv,text/*" multiple><textarea id="np" rows="5" placeholder="…or paste notes here"></textarea><button class="btn" id="na">Save pasted notes</button><div id="nl"></div>';
+  $("nf").onchange=async e=>{for(const f of e.target.files){notes.push({name:f.name,text:(await f.text()).slice(0,20000)});}saveNotes();drawNotes();};
+  $("na").onclick=()=>{const t=$("np").value.trim();if(!t)return;notes.push({name:"Pasted notes "+(notes.length+1),text:t});$("np").value="";saveNotes();drawNotes();};
+  drawNotes();
+};
+function drawNotes(){
+  const l=$("nl");if(!l)return;
+  l.innerHTML=notes.length?notes.map((n,i)=>'<div class="note"><span>'+esc(n.name)+" · "+n.text.length+' chars</span><button class="btn sm" data-d="'+i+'">Delete</button></div>').join(""):note("No notes yet.");
+  l.querySelectorAll("[data-d]").forEach(b=>b.onclick=()=>{notes.splice(+b.dataset.d,1);saveNotes();drawNotes();});
+}
+const LANGS={en:{name:"English",sp:"en-US",ph:"Ask about any topic…"},ar:{name:"Arabic",sp:"ar-SA",ph:"اسأل عن أي موضوع…"},es:{name:"Spanish",sp:"es-ES",ph:"Pregunta sobre cualquier tema…"},fr:{name:"French",sp:"fr-FR",ph:"Posez une question…"},de:{name:"German",sp:"de-DE",ph:"Frag mich etwas…"},pt:{name:"Portuguese",sp:"pt-BR",ph:"Pergunte sobre qualquer tema…"},zh:{name:"Chinese",sp:"zh-CN",ph:"问任何主题…"},hi:{name:"Hindi",sp:"hi-IN",ph:"किसी भी विषय पर पूछें…"},ru:{name:"Russian",sp:"ru-RU",ph:"Спросите о любой теме…"},ja:{name:"Japanese",sp:"ja-JP",ph:"何でも質問してください…"},tr:{name:"Turkish",sp:"tr-TR",ph:"Herhangi bir konuyu sorun…"}};
+const NAMES={en:"English",ar:"العربية",es:"Español",fr:"Français",de:"Deutsch",pt:"Português",zh:"中文",hi:"हिन्दी",ru:"Русский",ja:"日本語",tr:"Türkçe"};
+let lang="en",deep=false,voiceOut=false,abortCtl=null,rec=null,listening=false;
+try{lang=localStorage.getItem("fai_lang")||"en";}catch(e){}
+if(!LANGS[lang])lang="en";
+MODES.simple="Explain very simply, like to a 12-year-old, using an everyday analogy.";
+MODES.sum="Summarize the student’s lecture notes into key points, formulas, and likely exam questions.";
+const il=s=>s.replace(/`([^`]+)`/g,"<code>$1</code>").replace(/\*\*([^*]+)\*\*/g,"<b>$1</b>");
+function fmt(t){
+  let o="",list=null;
+  const close=()=>{if(list){o+="</"+list+">";list=null;}};
+  for(const l of t.split("\n")){
+    let m;
+    if(m=l.match(/^#{1,4} +(.*)/)){close();o+="<h4>"+il(m[1])+"</h4>";}
+    else if(m=l.match(/^ *[-*] +(.*)/)){if(list!=="ul"){close();o+="<ul>";list="ul";}o+="<li>"+il(m[1])+"</li>";}
+    else if(m=l.match(/^ *[0-9]+[.)] +(.*)/)){if(list!=="ol"){close();o+="<ol>";list="ol";}o+="<li>"+il(m[1])+"</li>";}
+    else{close();if(l.trim())o+="<p>"+il(l)+"</p>";}
+  }
+  close();return o;
+}
+function showNote(m){const n=$("notice");n.hidden=false;n.textContent=m;setTimeout(()=>{n.hidden=true;},7000);}
+function setLang(l){lang=l;try{localStorage.setItem("fai_lang",l);}catch(e){}$("inp").placeholder=LANGS[l].ph;$("inp").dir="auto";}
+Object.keys(NAMES).forEach(k=>{const o=document.createElement("option");o.value=k;o.textContent=NAMES[k];$("lang").appendChild(o);});
+$("lang").value=lang;setLang(lang);
+$("lang").onchange=e=>{setLang(e.target.value);if(listening)rec.stop();};
+$("deep").onclick=()=>{deep=!deep;$("deep").classList.toggle("on",deep);};
+$("vo").onclick=()=>{voiceOut=!voiceOut;$("vo").classList.toggle("on",voiceOut);if(!voiceOut&&window.speechSynthesis)speechSynthesis.cancel();};
+function speak(t,force){
+  if((!voiceOut&&!force)||!window.speechSynthesis)return;
+  speechSynthesis.cancel();
+  const u=new SpeechSynthesisUtterance(t.replace(/```[^]*?```/g," ").replace(/[*#`]/g,""));
+  u.lang=LANGS[lang].sp;speechSynthesis.speak(u);
+}
+function addTools(el,t){
+  const d=document.createElement("div");d.className="tools";
+  const c=document.createElement("button");c.textContent="📋";c.title="Copy";
+  c.onclick=()=>{try{navigator.clipboard.writeText(t);c.textContent="✓";}catch(e){}};
+  const s=document.createElement("button");s.textContent="🔊";s.title="Read aloud";s.onclick=()=>speak(t,true);
+  d.append(c,s);el.appendChild(d);
+}
+function save(){try{localStorage.setItem("fai_chat",JSON.stringify(history));}catch(e){}}
+$("newc").onclick=()=>{history=[];save();if(window.speechSynthesis)speechSynthesis.cancel();[...$("log").querySelectorAll(".msg")].slice(1).forEach(x=>x.remove());};
+try{history=JSON.parse(localStorage.getItem("fai_chat")||"[]");history.forEach(m=>add(m.role==="user"?"user":"bot",md(m.content)));}catch(e){history=[];}
+const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+if(SR)$("mic").hidden=false;
+$("mic").onclick=()=>{
+  if(listening){rec.stop();return;}
+  try{
+    rec=new SR();rec.lang=LANGS[lang].sp;rec.interimResults=true;
+    rec.onresult=e=>{let t="";for(const r of e.results)t+=r[0].transcript;$("inp").value=t;};
+    rec.onerror=e=>showNote(e.error==="not-allowed"||e.error==="service-not-allowed"?"Microphone is blocked here. Allow mic access, or open the page directly in Chrome or Safari.":"Voice input error: "+e.error);
+    rec.onend=()=>{listening=false;$("mic").classList.remove("rec");if($("inp").value.trim())ask();};
+    $("inp").value="";rec.start();listening=true;$("mic").classList.add("rec");
+  }catch(e){showNote("Voice input isn’t available in this browser.");}
+};
+chips();
+(async()=>{
+  try{
+    sample = await claude.use("sample");
+    if(sample && sample.limits){ const l = await sample.limits(); imgOK = !!(l && l.images); }
+    if(imgOK) $("attach").hidden = false;
+  }catch(e){ sample = null; }
+})();
+</script>
+</body>
+</html>
