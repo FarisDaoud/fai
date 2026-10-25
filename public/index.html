@@ -205,7 +205,7 @@ async function ask(){
     if(abortCtl && abortCtl.signal.aborted){ out.innerHTML += "<br><small>(stopped)</small>"; busy=false; $("send").textContent="➤"; return; }
     out.innerHTML = err && err.code==="rate_limited" ? "Too many requests. Wait a moment and try again."
       : err && err.code==="not_granted" ? "Permission was declined, so I can’t answer. Reload and allow it."
-      : "Something went wrong. Please try again.";
+      : "Something went wrong: "+((err && err.message) || "unknown error");
   }
   busy=false; $("send").textContent="➤";
 }
