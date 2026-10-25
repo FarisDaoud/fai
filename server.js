@@ -44,9 +44,9 @@ const server = http.createServer(async (req, res) => {
         body: JSON.stringify({ model: MODELS[tier === "complex" ? "complex" : "default"], max_tokens: 2000, messages: msgs })
       });
       const j = await r.json();
-      if (!r.ok) return send(res, r.status, { error: (j.error && j.error.message) || "api_error" });
+      if (!r.ok) { console.log("Anthropic API error", r.status, JSON.stringify(j)); return send(res, r.status, { error: (j.error && j.error.message) || "api_error" }); }
       send(res, 200, { text: (j.content || []).filter(b => b.type === "text").map(b => b.text).join("") });
-    } catch (e) { send(res, 500, { error: "server_error" }); }
+    } catch (e) { console.log("Server error", e); send(res, 500, { error: "server_error: " + e.message }); }
     return;
   }
   res.writeHead(404); res.end("Not found");
